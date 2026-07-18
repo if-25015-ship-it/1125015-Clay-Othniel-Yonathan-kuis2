@@ -1,7 +1,7 @@
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+package trade.model.entity;
+
 import java.util.List;
+import trade.model.abstractclass.Item;
 
 public class TPList<T extends Item> {
     private List<T> listBarang = new ArrayList<>();

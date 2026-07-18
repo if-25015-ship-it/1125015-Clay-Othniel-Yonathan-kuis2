@@ -1,25 +1,27 @@
-// File: src/trade/controller/DeviceController.java
+// File: src/trade/controller/TradeController.java
 package trade.controller;
 
-import trade.model.entity.TPList;
-import trade.model.entity.Armor;
+import trade.model.exception.EmptyListException;
+import trade.model.exception.EmptyInputException;
+import trade.model.exception.InvalidNumberException;
+import trade.model.abstractclass.Item;
 import trade.model.entity.Potion;
 import trade.model.entity.Weapon;
+import trade.model.entity.Armor;
+import trade.model.enums.WeaponType;
+import trade.model.enums.ArmorType;
+import trade.util.CLIUtil;
+import trade.util.ListUtil;
 import trade.view.TradeView;
-import trade.model.exception.InvalidNumberException;
-import trade.model.exception.EmptyListException;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 public class TradeController {
-    // Penggunaan generic: menampung objek turunan dari Device
-    TPList<Potion> potionList = new TPList<>();
-    TPList<Weapon> weaponList = new TPList<>();
-    TPList<Armor> armorList = new TPList<>();
-
+    // Kategori disimpan secara terpisah sesuai dengan spesifikasi soal
+    private final List<Potion> daftarPotion = new ArrayList<>();
+    private final List<Weapon> daftarWeapon = new ArrayList<>();
+    private final List<Armor> daftarArmor = new ArrayList<>();
     private final TradeView view;
 
     public TradeController(TradeView view) {
@@ -27,98 +29,153 @@ public class TradeController {
     }
 
     public void start() {
-        boolean running = true;
-        while (running) {
+        int pilihan = -1;
+        while (pilihan != 0) {
             view.showMenu();
-            int choice = view.getMenuChoice();
+            try {
+                pilihan = CLIUtil.getIntInput("Pilih menu: ");
+                switch (pilihan) {
+                    case 1:
+                        tambahBarang();
+                        break;
+                    case 2:
+                        displayListAll();
+                        break;
+                    case 3:
+                        displayListSatuan();
+                        break;
+                    case 0:
+                        view.printMessage("Exit");
+                        break;
+                    default:
+                        view.printMessage("Pilihan menu tidak tersedia.");
+                }
+            } catch (EmptyInputException | InvalidNumberException e) {
+                view.printError(e.getMessage());
+            }
+        }
+    }
+
+    private void tambahBarang() {
+        try {
+            view.printMessage("\n--- Kategori Barang ---");
+            view.printMessage("1. Potion");
+            view.printMessage("2. Weapon");
+            view.printMessage("3. Armor");
+            int choice = CLIUtil.getIntInput("Pilih Kategori [1-3]: ");
+
+            String nama = CLIUtil.getStringInput("Masukkan nama barang: ");
+            double hargaSatuan = CLIUtil.getDoubleInput("Masukkan harga satuan: ");
 
             switch (choice) {
                 case 1:
-                    addBaranglelang();
+                    int jumlahJual = CLIUtil.getIntInput("Masukkan jumlah jual keseluruhan: ");
+                    int hpRestore = CLIUtil.getIntInput("Masukkan HP Restore value: ");
+                    int manaRestore = CLIUtil.getIntInput("Masukkan Mana Restore value: ");
+                    
+                    Potion potion = new Potion(nama, hargaSatuan, jumlahJual, hpRestore, manaRestore);
+                    daftarPotion.add(potion);
+                    view.printMessage("Potion berhasil ditambahkan ke daftar.");
                     break;
+
                 case 2:
-                    printSortedByTotal();
+                    int atk = CLIUtil.getIntInput("Masukkan Attack value: ");
+                    view.printMessage("Pilih Tipe Weapon: 1. Sword, 2. Axe, 3. Spear, 4. Bow");
+                    int typeWp = CLIUtil.getIntInput("Pilih [1-4]: ");
+                    WeaponType weaponType;
+                    switch (typeWp) {
+                        case 1: weaponType = WeaponType.SWORD; break;
+                        case 2: weaponType = WeaponType.AXE; break;
+                        case 3: weaponType = WeaponType.SPEAR; break;
+                        case 4: weaponType = WeaponType.BOW; break;
+                        default:
+                            throw new InvalidNumberException("Pilihan tipe Weapon tidak valid!");
+                    }
+                    
+                    Weapon weapon = new Weapon(nama, hargaSatuan, atk, weaponType);
+                    daftarWeapon.add(weapon);
+                    view.printMessage("Weapon berhasil ditambahkan ke daftar.");
                     break;
+
                 case 3:
-                    printSortedByUnit();
+                    int def = CLIUtil.getIntInput("Masukkan Defense value: ");
+                    view.printMessage("Pilih Tipe Armor: 1. Heavy, 2. Medium, 3. Light");
+                    int typeAr = CLIUtil.getIntInput("Pilih [1-3]: ");
+                    ArmorType armorType;
+                    switch (typeAr) {
+                        case 1: armorType = ArmorType.HEAVY; break;
+                        case 2: armorType = ArmorType.MEDIUM; break;
+                        case 3: armorType = ArmorType.LIGHT; break;
+                        default:
+                            throw new InvalidNumberException("Pilihan tipe Armor tidak valid!");
+                    }
+                    
+                    Armor armor = new Armor(nama, hargaSatuan, def, armorType);
+                    daftarArmor.add(armor);
+                    view.printMessage("Armor berhasil ditambahkan ke daftar.");
                     break;
-                case 0:
-                    view.showMessage("Keluar dari program. Terima kasih!");
-                    running = false;
-                    break;
+
                 default:
-                    view.showMessage("Pilihan menu tidak valid!");
+                    view.printMessage("Kategori tidak dikenal!");
             }
+        } catch (EmptyInputException | InvalidNumberException e) {
+            view.printError(e.getMessage());
         }
     }
 
-    private void addBaranglelang() {
-        view.showMessage("\n--- TAMBAH BARANG ---");
-        view.showMessage("Pilih Jenis Barang:");
-        view.showMessage("1. Potion");
-        view.showMessage("2. Weapon");
-        view.showMessage("3. Armor");
-        view.showMessage("0. Keluar");
-        int type = view.getIntInput("Pilih tipe: ");
-
-        switch (type) {
-            case 1:
-                addPotion();
-                break;
-            case 2:
-                addWeapon();
-                break;
-            case 3:
-                addArmor();
-                break;
-            case 0:
-                view.showMessage("Kembali ke menu utama.");
-                break;
-            default:
-                view.showMessage("Pilihan tidak valid!");
+    private void displayListAll() {
+        try {
+            listEmpty();
+            view.printMessage("\n--- Daftar Terurut Harga Keseluruhan Termurah ---");
+            
+            if (!daftarPotion.isEmpty()) {
+                view.printMessage("[ Kategori Potion ]");
+                List<Potion> sorted = ListUtil.sortByHargaKeseluruhan(daftarPotion);
+                view.displayList(sorted, false);
+            }
+            if (!daftarWeapon.isEmpty()) {
+                view.printMessage("[ Kategori Weapon ]");
+                List<Weapon> sorted = ListUtil.sortByHargaKeseluruhan(daftarWeapon);
+                view.displayList(sorted, false);
+            }
+            if (!daftarArmor.isEmpty()) {
+                view.printMessage("[ Kategori Armor ]");
+                List<Armor> sorted = ListUtil.sortByHargaKeseluruhan(daftarArmor);
+                view.displayList(sorted, false);
+            }
+        } catch (EmptyListException e) {
+            view.printError(e.getMessage());
         }
     }
 
-    
-
-    public static <E extends Item> void printSortedByTotal(List<E> items) throws EmptyListException {
-        if (items.isEmpty()) {
-            throw new EmptyListException("Daftar barang lelang di kategori ini masih kosong.");
-        }
-
-        List<E> temp = new ArrayList<>(items);
-
-        Collections.sort(temp, new Comparator<E>() {
-            @Override
-            public int compare(E a, E b) {
-                return Double.compare(a.getTotalHarga(), b.getTotalHarga());
+    private void displayListSatuan() {
+        try {
+            listEmpty();
+            view.printMessage("\n--- Daftar Terurut Harga Satuan Termurah ---");
+            
+            if (!daftarPotion.isEmpty()) {
+                view.printMessage("[ Kategori Potion ]");
+                List<Potion> sorted = ListUtil.sortByHargaSatuan(daftarPotion);
+                view.displayList(sorted, true);
             }
-        });
-
-        System.out.println("=== Urutan Harga Total Keseluruhan Termurah ===");
-        for (E item : temp) {
-            System.out.println(item.toString());
+            if (!daftarWeapon.isEmpty()) {
+                view.printMessage("[ Kategori Weapon ]");
+                List<Weapon> sorted = ListUtil.sortByHargaSatuan(daftarWeapon);
+                view.displayList(sorted, true);
+            }
+            if (!daftarArmor.isEmpty()) {
+                view.printMessage("[ Kategori Armor ]");
+                List<Armor> sorted = ListUtil.sortByHargaSatuan(daftarArmor);
+                view.displayList(sorted, true);
+            }
+        } catch (EmptyListException e) {
+            view.printError(e.getMessage());
         }
     }
 
-    //Generic method
-    public static <E extends Item> void printSortedByUnit(List<E> items) throws EmptyListException {
-        if (items.isEmpty()) {
-            throw new EmptyListException("Daftar barang lelang kategori ini masih kosong.");
-        }
-
-        List<E> temp = new ArrayList<>(items);
-
-        Collections.sort(temp, new Comparator<E>() {
-            @Override
-            public int compare(E a, E b) {
-                return Double.compare(a.getHargaSatuan(), b.getHargaSatuan());
-            }
-        });
-
-        System.out.println("=== Urutan Hrga Satuan Termurah ===");
-        for (E item : temp) {
-            System.out.println(item.toString() + " (harga satuan each :" + item.getHargaSatuan() + ")");
+    private void listEmpty() throws EmptyListException {
+        if (daftarPotion.isEmpty() && daftarWeapon.isEmpty() && daftarArmor.isEmpty()) {
+            throw new EmptyListException("Semua daftar barang lelang kosong!");
         }
     }
 }
