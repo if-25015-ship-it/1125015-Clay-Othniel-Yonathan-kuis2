@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TradeController {
-    // Kategori disimpan secara terpisah sesuai dengan spesifikasi soal
     private final List<Potion> daftarPotion = new ArrayList<>();
     private final List<Weapon> daftarWeapon = new ArrayList<>();
     private final List<Armor> daftarArmor = new ArrayList<>();
